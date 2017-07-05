@@ -23,7 +23,9 @@ westmed <- readOGR(dsn="C:\\Users\\fede\\Desktop\\MSP Master Tesis\\data",layer=
 
 # wm_bluefin <- crop(bluefin, westmed)
 
-## for some reason this clip only for the whole Mediterranean sea not just the West Med
+## for some reason this clip only for the whole Mediterranean sea not just the West Med. 
+## use gIntersection (below) to do it
+
 ###reclassify
 
 v.rcl <- c(0, 10, 0, 10, 100, 1)
