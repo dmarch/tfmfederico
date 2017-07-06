@@ -1,3 +1,4 @@
+setwd("C:")
 
 library(shapefiles)
 library(maptools)
