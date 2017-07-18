@@ -5,6 +5,7 @@ library(ncdf4)
 library(raster)
 library(rgeos)
 library(maptools)
+library(rgdal)
 
 ###bluefin <- nc_open("C:/Users/fede/Desktop/MSP Master Tesis/data/EMIS_BFT500_SH_08_2014.nc")
 ###print(bluefin)
