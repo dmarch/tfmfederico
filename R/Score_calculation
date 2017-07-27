@@ -11,15 +11,13 @@ library(rgeos) #### intersect() function, careful because it has conflicts with 
 ## Import dynamic zones previously created
 
 crswgs4326=CRS("+init=EPSG:4326")
-dynamic_zones <- readShapePoly("data/bluefin_06_14.shp", proj4string=crswgs4326,verbose=TRUE) 
+dynamic_zones <- readShapePoly("C:\\Governance_test\\result_poly\\bf_.._.....shp", proj4string=crswgs4326,verbose=TRUE) 
 zones.laea <- spTransform(dynamic_zones,CRS("+init=EPSG:3035"))
 
 # Import the jurisdictional waters limits
 
-JW <- readShapePoly ("C:/R Fed/Viewer project/sp_data/EEZ.shp",proj4string=crswgs4326,verbose=TRUE)
+JW <- readShapePoly("C:\\Governance_test\\original_data\\eez_clip.shp",proj4string=crswgs4326,verbose=TRUE)
 jw.laea <- spTransform(JW,CRS("+init=EPSG:3035"))
-
-### plot(zones.laea, axes=T, col='red'); plot(jw.laea, add=T)
 
 
 ## intersect dynamic polys with jurisdictional water layer
@@ -70,7 +68,7 @@ attArea <- spCbind(pi, areas)
 ### create a column with the proportion of area intersection for country
 library(dplyr)
 
-intersection <- attArea@data %>% mutate(intersect = area / sum(area))
+intersection <- attArea@data %>% mutate(intersect = area.1 / sum(area.1))
 
 
 ###################################
@@ -111,3 +109,9 @@ score_fm <- sum(fm$weighted)
 wgi <- area.ind.unique %>% filter(ohi_component_id == "wgi_all")
 
 score_wgi <- sum(wgi$weighted)
+
+## export
+
+write.csv(wgi, file = "C:\\Governance_test\\result_intersect\\wgi_._...csv")
+write.csv(fm, file = "C:\\Governance_test\\result_intersect\\fm_._...csv")
+
