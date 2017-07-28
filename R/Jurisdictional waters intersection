@@ -1,0 +1,96 @@
+setwd("C:")
+
+library(plyr)
+library(dplyr)
+library(rgdal)
+library(tidyr)
+library(xlsx)
+library(sp)
+library(maptools)
+
+crswgs4326=CRS("+init=EPSG:4326")
+#### load shapefile IW:
+IW <- readShapePoly("C:\\Governance_test\\original_data\\IW_clip.shp",proj4string=crswgs4326,verbose=TRUE) ## clip for the study area was done with ArcGIS because in R took to long
+### I want an Object_ID column as the one from arcGIS (not starting with "0" but with "1")..... is it really necessary?
+n <- nrow(IW@data)
+IW@data$FID <- c(0:(n-1))  ## necessary?
+iw.laea <- spTransform(IW,CRS("+init=EPSG:3035"))
+
+
+TS <- readShapePoly("C:\\Governance_test\\original_data\\TS_clip.shp",proj4string=crswgs4326,verbose=TRUE) ## clip for the study area was done with ArcGIS because in R took to long
+### I want an Object_ID column as the one from arcGIS (not starting with "0" but with "1")..... is it really necessary?
+n <- nrow(IW@data)
+TS@data$FID <- c(0:(n-1))  ## necessary?
+ts.laea <- spTransform(TS,CRS("+init=EPSG:3035"))
+
+EEZ <- readShapePoly("C:\\Governance_test\\original_data\\eez_erase_ts_iw.shp",proj4string=crswgs4326,verbose=TRUE) ## IW and TS where erased from EEZ, since EEZ overlap them
+n <- nrow(EEZ@data)
+EEZ@data$FID <- c(0:(n-1))
+eez.laea <- spTransform(EEZ,CRS("+init=EPSG:3035"))
+
+
+
+
+## Import dynamic zones previously created
+
+crswgs4326=CRS("+init=EPSG:4326")
+dynamic_zones <- readShapePoly("C:\\Governance_test\\result_poly\\bf_.._.....shp", proj4string=crswgs4326,verbose=TRUE) 
+zones.laea <- spTransform(dynamic_zones,CRS("+init=EPSG:3035"))
+
+
+#### 
+#################
+###### calculate intersection area ######################################################
+library(PBSmapping)
+library(raster)
+library(rgeos)
+
+detach(package:dplyr) ## dplyr in conflict with raster for intersect function
+
+### dissolve ts
+ts.diss <- gUnaryUnion(ts.laea)
+ts.diss$Pol_type <- "TS"
+
+pi.ts <- intersect(ts.diss, zones.laea)
+# pi <- intersect(zones.laea, iw.laea) #
+
+
+## since I am unable to run it for the IW due to a tricky problem (orphaned hole)
+## I can calculate the value for the IW as the area out of both EEZ and TS 
+
+
+## get the total area of the bluefin
+
+zones.laea$area <- area(zones.laea)
+
+## dissolve and calculate the EEZ intersect
+eez.diss <- gUnaryUnion(eez.laea)
+eez.diss$Pol_type <- "EEZ"
+
+pi.eez <- intersect(eez.diss, zones.laea)
+pi.eez$area <- area(pi.eez)
+zones.laea$EEZ_int <- pi.eez@data$area/zones.laea@data$area
+zones.laea$EEZ_area <- pi.eez@data$area
+
+## dissolve and calculate the TS intersect
+ts.diss <- gUnaryUnion(ts.laea)
+ts.diss$Pol_type <- "TS"
+
+pi.ts <- intersect(ts.diss, zones.laea)
+pi.ts$area <- area(pi.ts)
+zones.laea$ts_int <- pi.ts@data$area/zones.laea@data$area
+zones.laea$ts_area <- pi.ts@data$area
+
+
+## obtain iw intersection area and percentage from subtraction
+zones.laea$iw_area <- zones.laea@data$area - (pi.eez@data$area + pi.ts@data$area)
+zones.laea$iw_area <- ifelse(zones.laea$iw_area >= 0, zones.laea$iw_area, 0)
+zones.laea$iw_int <- zones.laea@data$iw_area/zones.laea@data$area
+
+View(zones.laea)
+
+zones <- zones.laea[, c(1,2,7,6,4,8,5,3)]
+View(zones@data)
+
+#### export as csv
+write.csv(zones@data, file = "C:\\Governance_test\\result_intersect\\jw_._...csv")
