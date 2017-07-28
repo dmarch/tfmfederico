@@ -1,0 +1,84 @@
+
+setwd("C:")
+
+library(shapefiles)
+library(maptools)
+library(rgdal)
+library(stringdist)
+library(leaflet)
+library(dplyr)
+library(rgeos) #### intersect() function, careful because it has conflicts with dplyr
+
+## Import dynamic zones previously created from raster to poly
+
+crswgs4326=CRS("+init=EPSG:4326")
+dynamic_zones <- readShapePoly("C:\\Governance_test\\result_poly\\bf_.._.....shp", proj4string=crswgs4326,verbose=TRUE) 
+zones.laea <- spTransform(dynamic_zones,CRS("+init=EPSG:3035"))
+
+# Import the jurisdictional waters limits (a clip was operated from the original EEZ layer because it took to long with R)
+
+JW <- readShapePoly("C:\\Governance_test\\original_data\\eez_clip.shp",proj4string=crswgs4326,verbose=TRUE)
+jw.laea <- spTransform(JW,CRS("+init=EPSG:3035"))
+
+
+
+## intersect dynamic polys with jurisdictional water layer
+
+Results <- gIntersects(zones.laea,jw.laea,byid=TRUE)
+
+Results <- as.data.frame(Results)
+colnames(Results)<-"Overlap"
+
+### join the dataframe of the jw with the results of the intersection
+
+Results_info <- cbind(jw.laea@data, Results) 
+
+## select only jw areas which overlap with the dynamic poly (Overlap = TRUE)
+
+selected <- Results_info %>% 
+  filter(Overlap == TRUE) 
+
+
+View(selected)
+
+
+#### 
+#################
+###### calculate intersection area ######################################################
+library(PBSmapping)
+library(raster)
+
+detach(package:dplyr) ## dplyr in conflict with raster for intersect function
+
+############## repair the zones.laea that sometimes is invalid for some reason (https://gis.stackexchange.com/questions/163445/r-solution-for-topologyexception-input-geom-1-is-invalid-self-intersection-er)
+zones.b <- gBuffer(zones.laea, byid=TRUE, width=0)
+## it works!!
+# intersect from raster package (it does not work if you have dplyr library)
+pi <- intersect(zones.b, jw.laea)
+plot(zones.b, axes=T); plot(jw.laea, add=T); plot(pi, add=T, col='red')
+
+
+## calculate area of intersection and add as a column
+
+## http://gis.stackexchange.com/questions/140504/extracting-intersection-areas-in-r
+areas <- data.frame(area=sapply(pi@polygons, FUN=function(x) {slot(x, 'area')}))
+
+row.names(areas) <- sapply(pi@polygons, FUN=function(x) {slot(x, 'ID')})
+
+# Combine attributes info and areas (area is in m2)
+
+attArea <- spCbind(pi, areas)
+
+### create a column with the proportion of area intersection for country
+library(dplyr)
+
+intersection <- attArea@data %>% mutate(intersect = area.1 / sum(area.1))
+
+## create a column with the value in percentage
+
+intersection$percentage <- paste(round((intersection$intersect)*100,digits=1),"%",sep="")
+
+View(intersection)
+## export
+
+write.csv(intersection, file = "C:\\Governance_test\\result_intersect\\cntr_._...csv")
