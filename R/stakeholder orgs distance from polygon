@@ -1,0 +1,46 @@
+
+setwd("C:")
+
+library(shapefiles)
+library(maptools)
+library(rgdal)
+library(stringdist)
+library(leaflet)
+library(dplyr)
+library(rgeos) #### intersect() function, careful because it has conflicts with dplyr
+
+## Import dynamic zones previously created
+
+crswgs4326=CRS("+init=EPSG:4326")
+dynamic_zones <- readShapePoly("C:\\Governance_test\\result_poly\\bf_.._.....shp", proj4string=crswgs4326,verbose=TRUE) 
+zones.laea <- spTransform(dynamic_zones,CRS("+init=EPSG:3035"))
+
+
+punctual_infos <- readShapePoints("C:\\Governance_test\\original_data\\punctual_orgs.shp",proj4string=crswgs4326,verbose=TRUE)
+
+infos.laea <- spTransform(punctual_infos,CRS("+init=EPSG:3035"))
+
+Distance <- gDistance(zones.laea, infos.laea, byid = TRUE)
+Distance <- as.data.frame(Distance)
+colnames(Distance)<-"dist"
+Distance$ORG_NAME<-infos.laea@data$Org_nam
+
+Distance$dist <- as.numeric(Distance$dist)
+
+####
+
+punctual_infos@data$Dist <- Distance$dist
+
+ORGS <- punctual_infos@data
+
+
+### make ranking for the different sectors use dlpyr group_by() and slice()
+closer_orgs <- ORGS %>% group_by(Sector, Org_typ) %>%
+  arrange(Dist)  %>%
+  filter(Dist < 200000 ) #### select all the orgs at less than 200 km buffer dist
+  #slice(1:3) 
+
+View(closer_orgs)
+
+## export
+write.csv(closer_orgs, file = "C:\\Governance_test\\result_intersect\\..km_orgs_._...csv")
