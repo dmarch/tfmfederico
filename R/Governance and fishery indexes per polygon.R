@@ -26,14 +26,6 @@ split.poly@data$SP_ID <- c(0:(n-1))
 JW <- readShapePoly("C:\\Governance_test\\original_data\\eez_clip.shp",proj4string=crswgs4326,verbose=TRUE)
 jw.laea <- spTransform(JW,CRS("+init=EPSG:3035"))
 
-## clip 
-# westmed <- readOGR(dsn="C:\\Governance_test\\original_data",layer="WestMed_area")
-# westmed.laea <- spTransform(westmed,CRS("+init=EPSG:3035"))
-
-# clip <- gIntersection(jw.laea, westmed.laea)
-
-### plot(zones.laea, axes=T, col='red'); plot(jw.laea, add=T)
-
 
 ## intersect dynamic polys with jurisdictional water layer
 
@@ -67,21 +59,20 @@ detach("package:dplyr") ## dplyr in conflict with raster for intersect function
 zones.b <- gBuffer(split.poly, byid=TRUE, width=0)
 ## it works!!
 
-
-
+## SUBSET THE MULTIPOLYGON IN EACH POLYGON
+## THIS WAY I CAN DO MANUALLY IT BY ONE BY ONE
+zones.laea <- zones.b[zones.b$SP_ID == 1,]
 
 
 #####°°°°°°°°°°°°°°°°
-##  I SHOULD FIND A WAY TO REPEAT THE FOLLOWING CACULATIONS FOR EACH SINGLE POLYGONn
+## I SHOULD FIND AN AUTOMATIC WAY TO REPEAT THE FOLLOWING CACULATIONS FOR EACH SINGLE POLYGON 
 #####°°°°°°°°°°°°°°°°
-
-
 
 
 
 
 # intersect from raster package (it does not work if you have dplyr library)
-pi <- intersect(jw.laea,zones.b)
+pi <- intersect(jw.laea,zones.laea)
 plot(zones.laea, axes=T); plot(jw.laea, add=T); plot(pi, add=T, col='red')
 
 
@@ -140,3 +131,5 @@ score_fm <- sum(fm$weighted)
 wgi <- area.ind.unique %>% filter(ohi_component_id == "wgi_all")
 
 score_wgi <- sum(wgi$weighted)
+
+
