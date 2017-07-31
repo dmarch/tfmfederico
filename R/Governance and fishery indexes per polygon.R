@@ -72,7 +72,7 @@ zones.b <- gBuffer(split.poly, byid=TRUE, width=0)
 
 
 #####°°°°°°°°°°°°°°°°
-## I should find a way to repeat the following caculations for each single polygon
+##  I SHOULD FIND A WAY TO REPEAT THE FOLLOWING CACULATIONS FOR EACH SINGLE POLYGONn
 #####°°°°°°°°°°°°°°°°
 
 
