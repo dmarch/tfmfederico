@@ -71,9 +71,9 @@ zones.b <- gBuffer(split.poly, byid=TRUE, width=0)
 
 
 
-#####같같같같같같같같
+#####째째째째째째째째째째째째째째째째
 ## I should find a way to repeat the following caculations for each single polygon
-#####같같같같같같같같
+#####째째째째째째째째째째째째째째째째
 
 
 
