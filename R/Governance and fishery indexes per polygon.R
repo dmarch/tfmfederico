@@ -60,7 +60,7 @@ zones.b <- gBuffer(split.poly, byid=TRUE, width=0)
 ## it works!!
 
 ## SUBSET THE MULTIPOLYGON IN EACH POLYGON
-## THIS WAY I CAN DO MANUALLY IT BY ONE BY ONE
+## THIS WAY I CAN DO IT MANUALLY BY ONE BY ONE
 zones.laea <- zones.b[zones.b$SP_ID == 1,]
 
 
