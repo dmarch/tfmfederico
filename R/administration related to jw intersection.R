@@ -11,35 +11,33 @@ library(rgeos) ####intersect library
 
 crswgs4326=CRS("+init=EPSG:4326")
 
-##### in this case I should probably make a subset of the orgs with punctual reference not reletable with jw based on sector & org_type column
+##### upload adminsitrations-jurisdictional waters layer
 
 org <- readShapePoly ("C:/R Fed/Viewer project/Results/jw_admins.shp",proj4string=crswgs4326,verbose=TRUE)
 jw.laea <- spTransform(org,CRS("+init=EPSG:3035"))
 ### plot(org)
 
-### now I will do the intersection with the jurisdictional water poligons data frame jw.laea 
-### for some reason the intersection doesn't work with the "admin_join" layer (something related with 
-### the merge data changes: e.g. multipleGeometries=TRUE)
-### so first I will do the intersection and afdter I will relate the intersected poligons with the corresponding admins
-
+##### upload bluefin tuna dynamic zones
 
 crswgs4326=CRS("+init=EPSG:4326")
 dynamic_zones <- readShapePoly("C:\\Governance_test\\result_poly\\bf_06_2003.shp", proj4string=crswgs4326,verbose=TRUE) 
 zones.laea <- spTransform(dynamic_zones,CRS("+init=EPSG:3035"))
 
+## make a 0 buffer to eliminate holes
+
 zones.b <- gBuffer(zones.laea, byid=TRUE, width=0)
 jw.b <- gBuffer(jw.laea, byid=TRUE, width=0)
-## intersect poligon with jurisdictional waters layer: I use the previously created layer (above*)
+
+## intersect poligon with jurisdictional waters layer
 Results <- gIntersects(zones.b,jw.b,byid=TRUE)
 
-
+## create a dtatframe with only selected administrations
 Results <- as.data.frame(Results)
-# rownames(Results)<-clean_jw@data$GeoName ### I can skip this
-colnames(Results)<-"Select"
-### clean_jw has a lot of columns in the dataframe so before the bind I should leave only the useful ones
-jw_infos <- jw.b@data ## %>% select(1: 25)
-Results_info <- cbind(Results, jw_infos) 
 
+colnames(Results)<-"Select"
+
+jw_infos <- jw.b@data 
+Results_info <- cbind(Results, jw_infos) 
 
 selected <- Results_info %>% 
   filter(Select == TRUE) # %>% 
